@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy: #1a2332;
+    --brand-pink: #e4154b;
+  }
+}
+
+@layer utilities {
+  .bg-navy {
+    background-color: var(--navy);
+  }
+  
+  .text-navy {
+    color: var(--navy);
+  }
+  
+  .bg-brand-pink {
+    background-color: var(--brand-pink);
+  }
+  
+  .text-brand-pink {
+    color: var(--brand-pink);
+  }
+  
+  .border-brand-pink {
+    border-color: var(--brand-pink);
+  }
+
+  /* Infinite scroll animation */
+  @keyframes slide-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-slide-left {
+    animation: slide-left 30s linear infinite;
+  }
+
+  /* Pulse animation delays */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+  
+  .animation-delay-700 {
+    animation-delay: 700ms;
+  }
+  
+  .animation-delay-800 {
+    animation-delay: 800ms;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-white text-gray-900;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-pink to-brand-navy;
+  }
+  
+  .score-gradient {
+    @apply bg-gradient-to-r from-brand-pink to-brand-navy;
+  }
+}
+
+/* Custom animations */
+@keyframes slideLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse-diamond {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+.animate-slide-left {
+  animation: slideLeft 30s linear infinite;
+}
+
+.animate-pulse-diamond {
+  animation: pulse-diamond 2s ease-in-out infinite;
+}
+
+/* Score bar animation */
+@keyframes fillBar {
+  from {
+    width: 0%;
+  }
+}
+
+.animate-fill-bar {
+  animation: fillBar 2s ease-out forwards;
+}
