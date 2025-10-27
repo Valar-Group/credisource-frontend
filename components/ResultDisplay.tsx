@@ -11,9 +11,9 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
   const [displayScore, setDisplayScore] = useState(0);
 
   useEffect(() => {
-    if (result?.trust_score) {
+    if (result?.trust_score?.score !== undefined) {
       let current = 0;
-      const target = Math.round(result.trust_score);
+      const target = Math.round(result.trust_score.score);
       const increment = target / 50;
       
       const timer = setInterval(() => {
@@ -69,7 +69,8 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
     );
   }
 
-  const score = displayScore;
+  const score = result?.trust_score?.score !== undefined ? result.trust_score.score : displayScore;
+  
   const getScoreColor = (score: number) => {
     if (score >= 70) return 'text-green-600';
     if (score >= 40) return 'text-yellow-600';
@@ -108,20 +109,25 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
 
       {/* Score Display */}
       <div className="text-center mb-8">
-        <div className={`text-7xl md:text-8xl font-bold mb-4 ${getScoreColor(score)}`}>
-          {score}%
+        <div className={`text-7xl md:text-8xl font-bold mb-4 ${getScoreColor(displayScore)}`}>
+          {displayScore}%
         </div>
-        <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-4">
-          This content is <span className={getScoreColor(score)}>{getScoreLabel(score)}</span>
+        <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">
+          {result.trust_score?.label || getScoreLabel(displayScore)}
         </p>
+        {result.trust_score?.explanation && (
+          <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+            {result.trust_score.explanation}
+          </p>
+        )}
       </div>
 
       {/* Gradient Bar */}
       <div className="mb-8">
         <div className="relative h-8 bg-gray-200 rounded-full overflow-hidden">
           <div 
-            className={`absolute top-0 left-0 h-full ${getBarColor(score)} transition-all duration-1000 ease-out`}
-            style={{ width: `${score}%` }}
+            className={`absolute top-0 left-0 h-full ${getBarColor(displayScore)} transition-all duration-1000 ease-out`}
+            style={{ width: `${displayScore}%` }}
           ></div>
         </div>
         <div className="flex justify-between mt-2 text-sm text-gray-600">
@@ -132,24 +138,43 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
       </div>
 
       {/* Evidence Breakdown */}
-      {result.evidence && (
+      {result.evidence && result.evidence.length > 0 && (
         <div className="border-t pt-6">
           <h3 className="text-xl font-bold text-navy mb-4">Detection Evidence</h3>
           <div className="space-y-3">
             {result.evidence.map((item: any, index: number) => (
               <div key={index} className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-navy">{item.source || `Model ${index + 1}`}</span>
-                  <span className={`font-bold ${getScoreColor(item.score || 0)}`}>
-                    {Math.round(item.score || 0)}%
+                  <span className="font-semibold text-navy">
+                    {item.category || item.source || `Source ${index + 1}`}
+                  </span>
+                  <span className={`font-bold ${getScoreColor(Math.round((item.confidence || 0) * 100))}`}>
+                    {Math.round((item.confidence || 0) * 100)}%
                   </span>
                 </div>
-                {item.details && (
-                  <p className="text-sm text-gray-700">{item.details}</p>
+                {item.signal && (
+                  <p className="text-sm text-gray-700 mb-1">{item.signal}</p>
+                )}
+                {item.details && typeof item.details === 'string' && (
+                  <p className="text-sm text-gray-600">{item.details}</p>
                 )}
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Confidence Band */}
+      {result.trust_score?.confidence && (
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <p className="text-sm text-gray-700">
+            <strong>Confidence Level:</strong> {result.trust_score.confidence}
+          </p>
+          {result.trust_score.recommended_action && (
+            <p className="text-sm text-gray-700 mt-2">
+              <strong>Recommendation:</strong> {result.trust_score.recommended_action}
+            </p>
+          )}
         </div>
       )}
 
