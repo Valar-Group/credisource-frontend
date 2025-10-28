@@ -107,14 +107,14 @@ export default function Home() {
           content_type: contentType
         })
       } else if (data.type === 'file') {
-        // File upload
+        // File upload - FIXED: Use /verify/file endpoint
         setLoadingMessage(`Uploading and analyzing ${contentType}...`)
         const formData = new FormData()
         formData.append('file', data.content as File)
         formData.append('content_type', contentType)
 
-        const endpoint = contentType === 'video' ? '/verify/video' : '/verify/image'
-        response = await axios.post(`${API_BASE_URL}${endpoint}`, formData, {
+        // FIXED: Always use /verify/file for file uploads
+        response = await axios.post(`${API_BASE_URL}/verify/file`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
       }
