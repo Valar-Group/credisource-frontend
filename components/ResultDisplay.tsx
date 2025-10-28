@@ -29,6 +29,12 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
   // The API returns: { status: "completed", result: { trust_score: 97, ... } }
   // So we need to extract the actual result data
   const actualResult = result.result || result; // Handle both cases
+  
+  // DEBUG: Let's see what we're working with
+  console.log('========== EXTRACTION DEBUG ==========');
+  console.log('actualResult:', actualResult);
+  console.log('actualResult.trust_score:', actualResult.trust_score);
+  console.log('actualResult.label:', actualResult.label);
 
   // Backend returns:
   // {
