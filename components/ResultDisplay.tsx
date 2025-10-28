@@ -25,6 +25,11 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
     return <div className="p-12 text-center text-gray-600">No result yet</div>;
   }
 
+  // IMPORTANT: Handle API response structure
+  // The API returns: { status: "completed", result: { trust_score: 97, ... } }
+  // So we need to extract the actual result data
+  const actualResult = result.result || result; // Handle both cases
+
   // Backend returns:
   // {
   //   "trust_score": 97,              <- THE SCORE (number)
@@ -36,13 +41,13 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
   //   "evidence": { ... }
   // }
 
-  const score = result.trust_score || 0;  // ✅ FIXED: Get score directly
-  const label = result.label || 'Unknown';  // ✅ FIXED: Use label for verdict
+  const score = actualResult.trust_score || 0;  // ✅ FIXED: Get score directly
+  const label = actualResult.label || 'Unknown';  // ✅ FIXED: Use label for verdict
   
   // Build details object for ScoreDisplay
   const details = {
     trust_score: {
-      explanation: result.explanation || result.verdict || '',
+      explanation: actualResult.explanation || actualResult.verdict || '',
       confidence: score >= 80 ? 'High' : score >= 50 ? 'Medium' : 'Low',
       recommended_action: score >= 70 
         ? 'This content appears credible based on our analysis.'
@@ -52,36 +57,36 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
       scoring_factors: [
         {
           factor: 'Source Credibility',
-          score: result.source_credibility || 0,
-          weight: result.weights_used?.source ? `${Math.round(result.weights_used.source * 100)}%` : '40%',
-          reasoning: result.evidence?.source?.verdict || 'Source analysis completed'
+          score: actualResult.source_credibility || 0,
+          weight: actualResult.weights_used?.source ? `${Math.round(actualResult.weights_used.source * 100)}%` : '40%',
+          reasoning: actualResult.evidence?.source?.verdict || 'Source analysis completed'
         },
         {
           factor: 'Content Quality',
-          score: result.content_quality || 0,
-          weight: result.weights_used?.content ? `${Math.round(result.weights_used.content * 100)}%` : '35%',
-          reasoning: result.evidence?.content?.verdict || 'Content analysis completed'
+          score: actualResult.content_quality || 0,
+          weight: actualResult.weights_used?.content ? `${Math.round(actualResult.weights_used.content * 100)}%` : '35%',
+          reasoning: actualResult.evidence?.content?.verdict || 'Content analysis completed'
         },
         {
           factor: 'Cross-Reference',
-          score: result.cross_reference || 0,
-          weight: result.weights_used?.cross_ref ? `${Math.round(result.weights_used.cross_ref * 100)}%` : '25%',
-          reasoning: result.evidence?.cross_reference?.verdict || 'Cross-reference check completed'
+          score: actualResult.cross_reference || 0,
+          weight: actualResult.weights_used?.cross_ref ? `${Math.round(actualResult.weights_used.cross_ref * 100)}%` : '25%',
+          reasoning: actualResult.evidence?.cross_reference?.verdict || 'Cross-reference check completed'
         }
       ],
-      methodology: `Story type: ${result.story_type || 'standard'}. Weighted analysis across multiple factors.`
+      methodology: `Story type: ${actualResult.story_type || 'standard'}. Weighted analysis across multiple factors.`
     },
     content_analysis: {
-      red_flags: result.evidence?.content?.red_flags || []
+      red_flags: actualResult.evidence?.content?.red_flags || []
     },
-    source_credibility: result.evidence?.source ? {
-      tier: result.evidence.source.tier || 'unknown',
-      bias: result.evidence.source.bias || 'unknown',
-      type: result.evidence.source.type || 'unknown',
-      verdict: result.evidence.source.verdict || ''
+    source_credibility: actualResult.evidence?.source ? {
+      tier: actualResult.evidence.source.tier || 'unknown',
+      bias: actualResult.evidence.source.bias || 'unknown',
+      type: actualResult.evidence.source.type || 'unknown',
+      verdict: actualResult.evidence.source.verdict || ''
     } : null,
     article: {
-      domain: result.evidence?.source?.domain || 'Unknown',
+      domain: actualResult.evidence?.source?.domain || 'Unknown',
       title: 'News Article', // Backend doesn't return title in current version
       word_count: null // Backend doesn't return word count in current version
     }
