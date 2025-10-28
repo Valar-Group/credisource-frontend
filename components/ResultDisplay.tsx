@@ -1,300 +1,60 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 interface ResultDisplayProps {
   result: any;
   isLoading: boolean;
 }
 
 export default function ResultDisplay({ result, isLoading }: ResultDisplayProps) {
-  const [displayScore, setDisplayScore] = useState(0);
-
-  // Debug: Log everything
-  useEffect(() => {
-    console.log('🔍 ResultDisplay received:', {
-      hasResult: !!result,
-      hasTrustScore: !!result?.trust_score,
-      hasFactors: !!result?.trust_score?.scoring_factors,
-      factorsLength: result?.trust_score?.scoring_factors?.length,
-      fullResult: result
-    });
-  }, [result]);
-
-  useEffect(() => {
-    if (result?.trust_score?.score !== undefined) {
-      let current = 0;
-      const target = Math.round(result.trust_score.score);
-      const increment = target / 50;
-      
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          setDisplayScore(target);
-          clearInterval(timer);
-        } else {
-          setDisplayScore(Math.round(current));
-        }
-      }, 20);
-
-      return () => clearInterval(timer);
-    }
-  }, [result]);
-
+  // ALWAYS show this for debugging
+  console.log('========== RESULT DISPLAY RENDERED ==========');
+  console.log('Result:', result);
+  console.log('Is Loading:', isLoading);
+  
   if (isLoading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-        <div className="flex flex-col items-center">
-          <div className="relative w-24 h-24 mb-6">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="grid grid-cols-3 gap-1 animate-pulse">
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-100"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-200"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-300"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-400"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-500"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-600"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-700"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-800"></div>
-              </div>
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-navy mb-2">Analyzing Content...</h3>
-          <p className="text-gray-600">Using multiple AI detection models</p>
-        </div>
-      </div>
-    );
+    return <div className="p-12 text-center">Loading...</div>;
   }
 
   if (!result) {
-    console.log('❌ No result provided to ResultDisplay');
-    return null;
+    return <div className="p-12 text-center">No result yet</div>;
   }
 
-  if (result.error) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-12 text-center border-4 border-red-500">
-        <div className="text-6xl mb-4">⚠️</div>
-        <h3 className="text-2xl font-bold text-red-600 mb-4">Verification Failed</h3>
-        <p className="text-gray-700">{result.error}</p>
-        {result.recommendation && (
-          <p className="text-gray-600 mt-4 text-sm">{result.recommendation}</p>
-        )}
-      </div>
-    );
-  }
-
-  const score = result?.trust_score?.score !== undefined ? result.trust_score.score : displayScore;
+  // FORCE SHOW EVERYTHING - NO CONDITIONS
+  const factors = result?.trust_score?.scoring_factors || [];
   
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-green-600';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getScoreLabel = (score: number) => {
-    if (score >= 70) return 'Likely Real';
-    if (score >= 40) return 'Uncertain';
-    return 'Likely AI-Generated';
-  };
-
-  const getBarColor = (score: number) => {
-    if (score >= 70) return 'bg-green-500';
-    if (score >= 40) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const getBadgeColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-800 border-green-300';
-    if (score >= 60) return 'bg-blue-100 text-blue-800 border-blue-300';
-    if (score >= 40) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    return 'bg-red-100 text-red-800 border-red-300';
-  };
-
-  // Extract scoring factors
-  const scoringFactors = result?.trust_score?.scoring_factors || [];
-  const hasFactors = scoringFactors && scoringFactors.length > 0;
-
-  console.log('📊 Scoring factors check:', { hasFactors, count: scoringFactors.length, factors: scoringFactors });
-
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-      {/* Logo + Title */}
-      <div className="flex items-center justify-center mb-8">
-        <div className="grid grid-cols-3 gap-1 mr-3">
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-        </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-navy">credisource score</h2>
+    <div className="bg-white rounded-2xl shadow-xl p-8">
+      <h1 className="text-4xl font-bold text-center mb-8">
+        {result?.trust_score?.score || 0}%
+      </h1>
+      
+      <div className="border-4 border-red-500 p-4 mb-4">
+        <h2 className="text-2xl font-bold mb-2">DEBUG INFO</h2>
+        <p>Has result: {result ? 'YES' : 'NO'}</p>
+        <p>Has trust_score: {result?.trust_score ? 'YES' : 'NO'}</p>
+        <p>Has scoring_factors: {result?.trust_score?.scoring_factors ? 'YES' : 'NO'}</p>
+        <p>Factors count: {factors.length}</p>
       </div>
 
-      {/* Score Display */}
-      <div className="text-center mb-8">
-        <div className={`text-7xl md:text-8xl font-bold mb-4 ${getScoreColor(displayScore)}`}>
-          {displayScore}%
-        </div>
-        <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">
-          {result.trust_score?.label || getScoreLabel(displayScore)}
-        </p>
-        {result.trust_score?.explanation && (
-          <p className="text-gray-600 mt-4 max-w-2xl mx-auto leading-relaxed">
-            {result.trust_score.explanation}
-          </p>
-        )}
+      <div className="border-4 border-blue-500 p-4 mb-4">
+        <h2 className="text-2xl font-bold mb-4">📊 SCORING FACTORS</h2>
+        <p className="mb-2">Attempting to render {factors.length} factors...</p>
+        {factors.length === 0 && <p className="text-red-600">NO FACTORS FOUND!</p>}
+        {factors.map((factor: any, i: number) => (
+          <div key={i} className="bg-gray-100 p-4 mb-2 rounded">
+            <p className="font-bold">{i + 1}. {factor?.factor || 'UNKNOWN'}</p>
+            <p>Score: {factor?.score || 0}/100</p>
+            <p>Weight: {factor?.weight || 'N/A'}</p>
+            <p className="text-sm text-gray-600">{factor?.reasoning || 'No reasoning'}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Gradient Bar */}
-      <div className="mb-8">
-        <div className="relative h-8 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className={`absolute top-0 left-0 h-full ${getBarColor(displayScore)} transition-all duration-1000 ease-out`}
-            style={{ width: `${displayScore}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between mt-2 text-sm text-gray-600">
-          <span>0</span>
-          <span>50</span>
-          <span>100</span>
-        </div>
-      </div>
-
-      {/* SCORING FACTORS - SIMPLIFIED AND GUARANTEED TO SHOW */}
-      {hasFactors && (
-        <div className="border-t border-gray-200 pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4">
-            📊 Scoring Breakdown
-          </h3>
-          <div className="space-y-4">
-            {scoringFactors.map((factor: any, index: number) => (
-              <div key={index} className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <h4 className="font-bold text-lg text-navy mb-1">
-                      {factor.factor || 'Unknown Factor'}
-                    </h4>
-                    <span className="text-sm text-gray-500">
-                      Weight: {factor.weight || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="ml-4">
-                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(factor.score || 0)}`}>
-                      {factor.score || 0}/100
-                    </span>
-                  </div>
-                </div>
-                {factor.reasoning && (
-                  <p className="text-gray-700 leading-relaxed text-sm">
-                    {factor.reasoning}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* RED FLAGS */}
-      {result.content_analysis?.red_flags && result.content_analysis.red_flags.length > 0 && (
-        <div className="border-t border-gray-200 pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4">
-            🚩 Quality Issues Detected
-          </h3>
-          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
-            <ul className="space-y-2">
-              {result.content_analysis.red_flags.map((flag: string, index: number) => (
-                <li key={index} className="flex items-start">
-                  <span className="text-yellow-600 mr-2">⚠️</span>
-                  <span className="text-gray-700 capitalize">{flag}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* SOURCE INFO */}
-      {result.source_credibility && (
-        <div className="border-t border-gray-200 pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4">
-            🏢 Source Information
-          </h3>
-          <div className="bg-blue-50 p-5 rounded-lg">
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-600 mb-1">Domain</p>
-                <p className="font-semibold text-navy">{result.article?.domain || 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 mb-1">Credibility Tier</p>
-                <p className="font-semibold text-navy capitalize">{result.source_credibility.tier}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 mb-1">Bias</p>
-                <p className="font-semibold text-navy capitalize">{result.source_credibility.bias}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 mb-1">Type</p>
-                <p className="font-semibold text-navy capitalize">{result.source_credibility.type?.replace('_', ' ')}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ARTICLE INFO */}
-      {result.article && (
-        <div className="border-t border-gray-200 pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4">
-            📰 Article Details
-          </h3>
-          <div className="bg-gray-50 p-5 rounded-lg space-y-3 text-sm">
-            {result.article.title && (
-              <div>
-                <p className="text-gray-600 mb-1">Title</p>
-                <p className="font-semibold text-navy">{result.article.title}</p>
-              </div>
-            )}
-            {result.article.author && (
-              <div>
-                <p className="text-gray-600 mb-1">Author</p>
-                <p className="text-gray-700">{result.article.author}</p>
-              </div>
-            )}
-            {result.article.word_count && (
-              <div>
-                <p className="text-gray-600 mb-1">Word Count</p>
-                <p className="text-gray-700">{result.article.word_count} words</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Confidence & Recommendation */}
-      {result.trust_score?.confidence && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-          <p className="text-sm text-gray-700">
-            <strong>Confidence:</strong> {result.trust_score.confidence}
-          </p>
-          {result.trust_score.recommended_action && (
-            <p className="text-sm text-gray-700 mt-2">
-              <strong>Recommendation:</strong> {result.trust_score.recommended_action}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Debug Info (remove in production) */}
-      <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
-        <strong>Debug:</strong> {hasFactors ? `✅ ${scoringFactors.length} factors loaded` : '❌ No factors found'}
+      <div className="border-4 border-green-500 p-4">
+        <h2 className="text-2xl font-bold mb-2">RAW DATA</h2>
+        <pre className="text-xs overflow-auto max-h-40 bg-black text-green-400 p-2">
+          {JSON.stringify(result, null, 2)}
+        </pre>
       </div>
     </div>
   );
