@@ -192,12 +192,12 @@ export default function Home() {
         )}
 
         {status === 'results' && results && (
-          <ScoreDisplay
-            score={results.trust_score.score}
-            verdict={results.trust_score.label}
-            details={results}
-          />
-        )}
+  <ScoreDisplay
+    score={results.trust_score}    // ✅ CORRECT - Direct number
+    verdict={results.label}         // ✅ CORRECT - Top-level key
+    details={results}
+  />
+)}
 
         {/* Features section (only show on input) */}
         {status === 'input' && (
