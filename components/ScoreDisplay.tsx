@@ -172,6 +172,13 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
                     {details.evidence.content.verdict}
                   </p>
                 )}
+                {details.evidence?.content?.contradiction_warning && (
+  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+    <p className="text-red-800 text-sm font-medium">
+      {details.evidence.content.contradiction_warning}
+    </p>
+  </div>
+)}
               </div>
 
               {/* Cross-Reference */}
@@ -196,6 +203,13 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
                     {details.evidence.cross_reference.verdict}
                   </p>
                 )}
+                {details.evidence?.cross_reference?.contradiction_warning && (
+  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+    <p className="text-red-800 text-sm font-medium">
+      {details.evidence.cross_reference.contradiction_warning}
+    </p>
+  </div>
+)}
               </div>
             </div>
             {details?.story_type && (
