@@ -10,6 +10,17 @@ interface ResultDisplayProps {
 export default function ResultDisplay({ result, isLoading }: ResultDisplayProps) {
   const [displayScore, setDisplayScore] = useState(0);
 
+  // Debug: Log everything
+  useEffect(() => {
+    console.log('🔍 ResultDisplay received:', {
+      hasResult: !!result,
+      hasTrustScore: !!result?.trust_score,
+      hasFactors: !!result?.trust_score?.scoring_factors,
+      factorsLength: result?.trust_score?.scoring_factors?.length,
+      fullResult: result
+    });
+  }, [result]);
+
   useEffect(() => {
     if (result?.trust_score?.score !== undefined) {
       let current = 0;
@@ -34,7 +45,6 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
     return (
       <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
         <div className="flex flex-col items-center">
-          {/* Animated Loading Diamonds */}
           <div className="relative w-24 h-24 mb-6">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="grid grid-cols-3 gap-1 animate-pulse">
@@ -57,7 +67,10 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
     );
   }
 
-  if (!result) return null;
+  if (!result) {
+    console.log('❌ No result provided to ResultDisplay');
+    return null;
+  }
 
   if (result.error) {
     return (
@@ -98,6 +111,12 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
     if (score >= 40) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
     return 'bg-red-100 text-red-800 border-red-300';
   };
+
+  // Extract scoring factors
+  const scoringFactors = result?.trust_score?.scoring_factors || [];
+  const hasFactors = scoringFactors && scoringFactors.length > 0;
+
+  console.log('📊 Scoring factors check:', { hasFactors, count: scoringFactors.length, factors: scoringFactors });
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
@@ -147,61 +166,46 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
         </div>
       </div>
 
-      {/* NEW: Scoring Factors Breakdown (for News) */}
-{(() => {
-  console.log('🔍 Full result object:', result);
-  console.log('🔍 Trust score exists?', result?.trust_score);
-  console.log('🔍 Scoring factors:', result?.trust_score?.scoring_factors);
-  return null;
-})()}
-{result.trust_score?.scoring_factors && result.trust_score.scoring_factors.length > 0 && (
-  <div className="border-t pt-6 mb-6">
-    <h3 className="text-xl font-bold text-navy mb-4 flex items-center">
-      <span className="mr-2">📊</span>
-      Scoring Breakdown
-    </h3>
+      {/* SCORING FACTORS - SIMPLIFIED AND GUARANTEED TO SHOW */}
+      {hasFactors && (
+        <div className="border-t border-gray-200 pt-6 mb-6">
+          <h3 className="text-xl font-bold text-navy mb-4">
+            📊 Scoring Breakdown
+          </h3>
           <div className="space-y-4">
-            {result.trust_score.scoring_factors.map((factor: any, index: number) => (
+            {scoringFactors.map((factor: any, index: number) => (
               <div key={index} className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <h4 className="font-bold text-lg text-navy mb-1">
-                      {factor.factor}
+                      {factor.factor || 'Unknown Factor'}
                     </h4>
                     <span className="text-sm text-gray-500">
-                      Weight: {factor.weight}
+                      Weight: {factor.weight || 'N/A'}
                     </span>
                   </div>
                   <div className="ml-4">
-                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(factor.score)}`}>
-                      {factor.score}/100
+                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(factor.score || 0)}`}>
+                      {factor.score || 0}/100
                     </span>
                   </div>
                 </div>
                 {factor.reasoning && (
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-gray-700 leading-relaxed text-sm">
                     {factor.reasoning}
                   </p>
                 )}
               </div>
             ))}
           </div>
-
-          {/* Methodology Note */}
-          {result.trust_score?.methodology && (
-            <p className="text-xs text-gray-500 mt-4 italic">
-              Method: {result.trust_score.methodology}
-            </p>
-          )}
         </div>
       )}
 
-      {/* NEW: Content Quality Details (for News) */}
+      {/* RED FLAGS */}
       {result.content_analysis?.red_flags && result.content_analysis.red_flags.length > 0 && (
-        <div className="border-t pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4 flex items-center">
-            <span className="mr-2">🚩</span>
-            Quality Issues Detected
+        <div className="border-t border-gray-200 pt-6 mb-6">
+          <h3 className="text-xl font-bold text-navy mb-4">
+            🚩 Quality Issues Detected
           </h3>
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
             <ul className="space-y-2">
@@ -216,64 +220,57 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
         </div>
       )}
 
-      {/* NEW: Source Credibility (for News) */}
+      {/* SOURCE INFO */}
       {result.source_credibility && (
-        <div className="border-t pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4 flex items-center">
-            <span className="mr-2">🏢</span>
-            Source Information
+        <div className="border-t border-gray-200 pt-6 mb-6">
+          <h3 className="text-xl font-bold text-navy mb-4">
+            🏢 Source Information
           </h3>
           <div className="bg-blue-50 p-5 rounded-lg">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Domain</p>
+                <p className="text-gray-600 mb-1">Domain</p>
                 <p className="font-semibold text-navy">{result.article?.domain || 'Unknown'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Credibility Tier</p>
+                <p className="text-gray-600 mb-1">Credibility Tier</p>
                 <p className="font-semibold text-navy capitalize">{result.source_credibility.tier}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Bias</p>
+                <p className="text-gray-600 mb-1">Bias</p>
                 <p className="font-semibold text-navy capitalize">{result.source_credibility.bias}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Type</p>
+                <p className="text-gray-600 mb-1">Type</p>
                 <p className="font-semibold text-navy capitalize">{result.source_credibility.type?.replace('_', ' ')}</p>
               </div>
             </div>
-            {result.source_credibility.verdict && (
-              <p className="text-sm text-gray-700 mt-4 pt-4 border-t border-blue-200">
-                <strong>Verdict:</strong> {result.source_credibility.verdict}
-              </p>
-            )}
           </div>
         </div>
       )}
 
-      {/* NEW: Article Information (for News) */}
+      {/* ARTICLE INFO */}
       {result.article && (
-        <div className="border-t pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4 flex items-center">
-            <span className="mr-2">📰</span>
-            Article Details
+        <div className="border-t border-gray-200 pt-6 mb-6">
+          <h3 className="text-xl font-bold text-navy mb-4">
+            📰 Article Details
           </h3>
-          <div className="bg-gray-50 p-5 rounded-lg space-y-3">
+          <div className="bg-gray-50 p-5 rounded-lg space-y-3 text-sm">
             {result.article.title && (
               <div>
-                <p className="text-sm text-gray-600 mb-1">Title</p>
+                <p className="text-gray-600 mb-1">Title</p>
                 <p className="font-semibold text-navy">{result.article.title}</p>
               </div>
             )}
             {result.article.author && (
               <div>
-                <p className="text-sm text-gray-600 mb-1">Author</p>
+                <p className="text-gray-600 mb-1">Author</p>
                 <p className="text-gray-700">{result.article.author}</p>
               </div>
             )}
             {result.article.word_count && (
               <div>
-                <p className="text-sm text-gray-600 mb-1">Word Count</p>
+                <p className="text-gray-600 mb-1">Word Count</p>
                 <p className="text-gray-700">{result.article.word_count} words</p>
               </div>
             )}
@@ -281,38 +278,11 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
         </div>
       )}
 
-      {/* EXISTING: Evidence Breakdown (for Images/Videos) */}
-      {result.evidence && result.evidence.length > 0 && (
-        <div className="border-t pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4">Detection Evidence</h3>
-          <div className="space-y-3">
-            {result.evidence.map((item: any, index: number) => (
-              <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-navy">
-                    {item.category || item.source || `Source ${index + 1}`}
-                  </span>
-                  <span className={`font-bold ${getScoreColor(Math.round((item.confidence || 0) * 100))}`}>
-                    {Math.round((item.confidence || 0) * 100)}%
-                  </span>
-                </div>
-                {item.signal && (
-                  <p className="text-sm text-gray-700 mb-1">{item.signal}</p>
-                )}
-                {item.details && typeof item.details === 'string' && (
-                  <p className="text-sm text-gray-600">{item.details}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Confidence Band */}
+      {/* Confidence & Recommendation */}
       {result.trust_score?.confidence && (
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
           <p className="text-sm text-gray-700">
-            <strong>Confidence Level:</strong> {result.trust_score.confidence}
+            <strong>Confidence:</strong> {result.trust_score.confidence}
           </p>
           {result.trust_score.recommended_action && (
             <p className="text-sm text-gray-700 mt-2">
@@ -322,11 +292,9 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
         </div>
       )}
 
-      {/* Learn More Link */}
-      <div className="text-center mt-8">
-        <a href="#about" className="text-brand-pink hover:text-pink-700 font-semibold underline">
-          Learn how our scores are calculated
-        </a>
+      {/* Debug Info (remove in production) */}
+      <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
+        <strong>Debug:</strong> {hasFactors ? `✅ ${scoringFactors.length} factors loaded` : '❌ No factors found'}
       </div>
     </div>
   );
