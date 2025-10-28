@@ -175,8 +175,8 @@ export default function Home() {
 
         {status === 'results' && results && (
           <ScoreDisplay
-            score={results.trust_score}
-            verdict={results.verdict}
+            score={results.trust_score.score}
+            verdict={results.trust_score.label}
             details={results}
           />
         )}
