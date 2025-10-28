@@ -19,6 +19,7 @@ export default function Home() {
 
   const determineContentType = (data: { type: string; content: string | File }) => {
     if (data.type === 'text') return 'text'
+    if (data.type === 'news') return 'news' // NEW: Handle news type
     if (data.type === 'file') {
       const file = data.content as File
       if (file.type.startsWith('video/')) return 'video'
@@ -26,6 +27,17 @@ export default function Home() {
     }
     if (data.type === 'url') {
       const url = data.content as string
+      
+      // NEW: Check if it's a news URL
+      const newsPatterns = [
+        'bbc.com', 'bbc.co.uk', 'reuters.com', 'apnews.com', 'nytimes.com',
+        'theguardian.com', 'wsj.com', 'cnn.com', 'foxnews.com', 'nbcnews.com',
+        'washingtonpost.com', 'bloomberg.com', 'news', 'article', '/story/'
+      ]
+      if (newsPatterns.some(pattern => url.toLowerCase().includes(pattern))) {
+        return 'news'
+      }
+      
       // Check if it's a social media URL
       if (url.includes('tiktok.com') || url.includes('twitter.com') || 
           url.includes('youtube.com') || url.includes('instagram.com')) {
@@ -98,6 +110,13 @@ export default function Home() {
           text: data.content,
           content_type: 'text'
         })
+      } else if (data.type === 'news' || contentType === 'news') {
+        // NEW: News verification
+        setLoadingMessage('Analyzing news article (source, text, images, cross-reference)...')
+        response = await axios.post(`${API_BASE_URL}/verify/news`, {
+          url: data.content,
+          content_type: 'news'
+        })
       } else if (data.type === 'url') {
         // URL verification
         setLoadingMessage(`Downloading and analyzing ${contentType}...`)
@@ -107,13 +126,12 @@ export default function Home() {
           content_type: contentType
         })
       } else if (data.type === 'file') {
-        // File upload - FIXED: Use /verify/file endpoint
+        // File upload
         setLoadingMessage(`Uploading and analyzing ${contentType}...`)
         const formData = new FormData()
         formData.append('file', data.content as File)
         formData.append('content_type', contentType)
 
-        // FIXED: Always use /verify/file for file uploads
         response = await axios.post(`${API_BASE_URL}/verify/file`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
@@ -149,7 +167,7 @@ export default function Home() {
               Know What's Real
             </h1>
             <p className="text-xl text-gray-600 mb-2">
-              Verify images, videos, and text for AI generation
+              Verify images, videos, text, and news for AI generation
             </p>
             <p className="text-lg text-gray-500">
               Multi-provider detection for accurate results
