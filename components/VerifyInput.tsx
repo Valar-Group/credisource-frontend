@@ -8,9 +8,10 @@ interface VerifyInputProps {
 }
 
 export default function VerifyInput({ onSubmit, isLoading }: VerifyInputProps) {
-  const [inputType, setInputType] = useState<'url' | 'file' | 'text'>('url')
+  const [inputType, setInputType] = useState<'url' | 'file' | 'text' | 'news'>('url')
   const [urlInput, setUrlInput] = useState('')
   const [textInput, setTextInput] = useState('')
+  const [newsInput, setNewsInput] = useState('') // NEW: News URL input
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
 
@@ -21,6 +22,8 @@ export default function VerifyInput({ onSubmit, isLoading }: VerifyInputProps) {
       onSubmit({ type: 'url', content: urlInput })
     } else if (inputType === 'text' && textInput) {
       onSubmit({ type: 'text', content: textInput })
+    } else if (inputType === 'news' && newsInput) {
+      onSubmit({ type: 'news', content: newsInput }) // NEW: Handle news submission
     } else if (inputType === 'file' && selectedFile) {
       onSubmit({ type: 'file', content: selectedFile })
     }
@@ -56,8 +59,8 @@ export default function VerifyInput({ onSubmit, isLoading }: VerifyInputProps) {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Tab selector */}
-      <div className="flex gap-2 mb-4">
+      {/* Tab selector - UPDATED with News tab */}
+      <div className="flex gap-2 mb-4 flex-wrap">
         <button
           onClick={() => setInputType('url')}
           className={`px-6 py-2 rounded-full font-medium transition-all ${
@@ -87,6 +90,17 @@ export default function VerifyInput({ onSubmit, isLoading }: VerifyInputProps) {
           }`}
         >
           Text
+        </button>
+        {/* NEW: News Tab */}
+        <button
+          onClick={() => setInputType('news')}
+          className={`px-6 py-2 rounded-full font-medium transition-all ${
+            inputType === 'news'
+              ? 'bg-brand-pink text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          📰 News
         </button>
       </div>
 
@@ -175,6 +189,51 @@ export default function VerifyInput({ onSubmit, isLoading }: VerifyInputProps) {
               >
                 Verify Text
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* NEW: News Input */}
+        {inputType === 'news' && (
+          <div className="bg-white rounded-3xl shadow-lg p-8 border-2 border-gray-100 hover:border-brand-pink transition-all">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">📰</div>
+              <h3 className="text-2xl font-bold text-brand-navy mb-2">
+                News Article Verification
+              </h3>
+              <p className="text-gray-600">
+                Checks source credibility, text authenticity, images, and cross-references
+              </p>
+            </div>
+            
+            <div className="flex items-center bg-gray-50 rounded-full overflow-hidden border-2 border-gray-200 focus-within:border-brand-pink transition-all">
+              <input
+                type="url"
+                value={newsInput}
+                onChange={(e) => setNewsInput(e.target.value)}
+                placeholder="Paste news article URL (e.g., https://www.bbc.com/news/...)"
+                className="flex-1 px-6 py-4 text-lg outline-none bg-transparent"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={!newsInput || isLoading}
+                className="bg-brand-navy text-white px-8 py-4 hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Verify News
+              </button>
+            </div>
+
+            {/* Example sources */}
+            <div className="mt-6 text-sm text-gray-500">
+              <p className="font-medium mb-2">Works with major news sources:</p>
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-gray-100 px-3 py-1 rounded-full">BBC</span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full">Reuters</span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full">CNN</span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full">NY Times</span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full">+ many more</span>
+              </div>
             </div>
           </div>
         )}
