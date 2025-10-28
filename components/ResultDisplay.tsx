@@ -1,188 +1,181 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import axios from 'axios';
 
-interface ResultDisplayProps {
-  result: any;
+const API_BASE = 'https://credisource-production.up.railway.app';
+
+type ContentType = 'image' | 'video' | 'text' | 'news';
+
+interface VerifyInterfaceProps {
+  onResult: (result: any) => void;
   isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }
 
-export default function ResultDisplay({ result, isLoading }: ResultDisplayProps) {
-  const [displayScore, setDisplayScore] = useState(0);
+export default function VerifyInterface({ onResult, isLoading, setIsLoading }: VerifyInterfaceProps) {
+  const [contentType, setContentType] = useState<ContentType>('image');
+  const [url, setUrl] = useState('');
+  const [text, setText] = useState('');
+  const [file, setFile] = useState<File | null>(null);
 
-  useEffect(() => {
-    if (result?.trust_score?.score !== undefined) {
-      let current = 0;
-      const target = Math.round(result.trust_score.score);
-      const increment = target / 50;
-      
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          setDisplayScore(target);
-          clearInterval(timer);
+  const handleSubmit = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    onResult(null);
+
+    try {
+      let jobId: string;
+
+      // Submit verification job
+      if (contentType === 'text') {
+        const response = await axios.post(`${API_BASE}/verify/text`, {
+          text,
+          content_type: 'text'
+        });
+        jobId = response.data.job_id;
+      } else if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('content_type', contentType);
+        
+        const response = await axios.post(`${API_BASE}/verify/${contentType}`, formData);
+        jobId = response.data.job_id;
+      } else if (url) {
+        const response = await axios.post(`${API_BASE}/verify/${contentType}`, {
+          url,
+          content_type: contentType
+        });
+        jobId = response.data.job_id;
+      } else {
+        throw new Error('Please provide content to verify');
+      }
+
+      // Poll for results
+      const pollResult = async () => {
+        const statusResponse = await axios.get(`${API_BASE}/job/${jobId}`);
+        const data = statusResponse.data;
+
+        if (data.status === 'completed') {
+          onResult(data.result);
+          setIsLoading(false);
+        } else if (data.status === 'failed') {
+          onResult({ error: data.error || 'Verification failed' });
+          setIsLoading(false);
         } else {
-          setDisplayScore(Math.round(current));
+          setTimeout(pollResult, 2000);
         }
-      }, 20);
+      };
 
-      return () => clearInterval(timer);
+      pollResult();
+    } catch (error: any) {
+      onResult({ error: error.response?.data?.detail || error.message });
+      setIsLoading(false);
     }
-  }, [result]);
-
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-        <div className="flex flex-col items-center">
-          {/* Animated Loading Diamonds */}
-          <div className="relative w-24 h-24 mb-6">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="grid grid-cols-3 gap-1 animate-pulse">
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-100"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-200"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-300"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-400"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-500"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-600"></div>
-                <div className="w-6 h-6 bg-brand-pink transform rotate-45 animation-delay-700"></div>
-                <div className="w-6 h-6 bg-navy transform rotate-45 animation-delay-800"></div>
-              </div>
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-navy mb-2">Analyzing Content...</h3>
-          <p className="text-gray-600">Using multiple AI detection models</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!result) return null;
-
-  if (result.error) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-12 text-center border-4 border-red-500">
-        <div className="text-6xl mb-4">⚠️</div>
-        <h3 className="text-2xl font-bold text-red-600 mb-4">Verification Failed</h3>
-        <p className="text-gray-700">{result.error}</p>
-      </div>
-    );
-  }
-
-  const score = result?.trust_score?.score !== undefined ? result.trust_score.score : displayScore;
-  
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-green-600';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-red-600';
   };
 
-  const getScoreLabel = (score: number) => {
-    if (score >= 70) return 'Likely Real';
-    if (score >= 40) return 'Uncertain';
-    return 'Likely AI-Generated';
-  };
-
-  const getBarColor = (score: number) => {
-    if (score >= 70) return 'bg-green-500';
-    if (score >= 40) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
+  const canSubmit = contentType === 'text' ? text.length > 0 : (url || file);
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-      {/* Logo + Title */}
-      <div className="flex items-center justify-center mb-8">
-        <div className="grid grid-cols-3 gap-1 mr-3">
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-brand-pink transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
-          <div className="w-4 h-4 bg-navy transform rotate-45"></div>
+    <div className="max-w-4xl mx-auto px-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8">
+        {/* Content Type Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {(['image', 'video', 'text', 'news'] as ContentType[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => {
+                setContentType(type);
+                setUrl('');
+                setText('');
+                setFile(null);
+              }}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                contentType === type
+                  ? 'bg-brand-pink text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>
+          ))}
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-navy">credisource score</h2>
-      </div>
 
-      {/* Score Display */}
-      <div className="text-center mb-8">
-        <div className={`text-7xl md:text-8xl font-bold mb-4 ${getScoreColor(displayScore)}`}>
-          {displayScore}%
-        </div>
-        <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">
-          {result.trust_score?.label || getScoreLabel(displayScore)}
-        </p>
-        {result.trust_score?.explanation && (
-          <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-            {result.trust_score.explanation}
-          </p>
-        )}
-      </div>
-
-      {/* Gradient Bar */}
-      <div className="mb-8">
-        <div className="relative h-8 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className={`absolute top-0 left-0 h-full ${getBarColor(displayScore)} transition-all duration-1000 ease-out`}
-            style={{ width: `${displayScore}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between mt-2 text-sm text-gray-600">
-          <span>0</span>
-          <span>50</span>
-          <span>100</span>
-        </div>
-      </div>
-
-      {/* Evidence Breakdown */}
-      {result.evidence && result.evidence.length > 0 && (
-        <div className="border-t pt-6">
-          <h3 className="text-xl font-bold text-navy mb-4">Detection Evidence</h3>
-          <div className="space-y-3">
-            {result.evidence.map((item: any, index: number) => (
-              <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-navy">
-                    {item.category || item.source || `Source ${index + 1}`}
-                  </span>
-                  <span className={`font-bold ${getScoreColor(Math.round((item.confidence || 0) * 100))}`}>
-                    {Math.round((item.confidence || 0) * 100)}%
-                  </span>
-                </div>
-                {item.signal && (
-                  <p className="text-sm text-gray-700 mb-1">{item.signal}</p>
-                )}
-                {item.details && typeof item.details === 'string' && (
-                  <p className="text-sm text-gray-600">{item.details}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Confidence Band */}
-      {result.trust_score?.confidence && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-gray-700">
-            <strong>Confidence Level:</strong> {result.trust_score.confidence}
-          </p>
-          {result.trust_score.recommended_action && (
-            <p className="text-sm text-gray-700 mt-2">
-              <strong>Recommendation:</strong> {result.trust_score.recommended_action}
+        {/* Input Section */}
+        {contentType === 'text' ? (
+          <div className="mb-6">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Paste the text you want to verify (minimum 300 characters)..."
+              className="w-full h-40 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand-pink focus:outline-none resize-none"
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              {text.length} / 300 characters minimum
             </p>
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <>
+            {/* URL Input */}
+            <div className="mb-4">
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setFile(null);
+                }}
+                placeholder={`Enter ${contentType === 'news' ? 'news article' : contentType} URL (TikTok, Twitter, Instagram, etc.)`}
+                className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:border-brand-pink focus:outline-none text-lg"
+              />
+            </div>
 
-      {/* Learn More Link */}
-      <div className="text-center mt-8">
-        <a href="#about" className="text-brand-pink hover:text-pink-700 font-semibold underline">
-          Learn how our scores are calculated
-        </a>
+            <div className="text-center text-gray-500 mb-4">OR</div>
+
+            {/* File Upload */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-brand-pink transition-colors">
+              <input
+                type="file"
+                id="file-upload"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    setFile(e.target.files[0]);
+                    setUrl('');
+                  }
+                }}
+                accept={contentType === 'image' ? 'image/*' : contentType === 'video' ? 'video/*' : '*'}
+                className="hidden"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <div className="text-6xl mb-4">📁</div>
+                {file ? (
+                  <p className="text-lg font-semibold text-brand-pink">{file.name}</p>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold mb-2">Drop {contentType} here or click to upload</p>
+                    <p className="text-sm text-gray-500">
+                      {contentType === 'image' ? 'PNG, JPG, WebP up to 10MB' : 'MP4, MOV up to 150MB'}
+                    </p>
+                  </>
+                )}
+              </label>
+            </div>
+          </>
+        )}
+
+        {/* Submit Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit || isLoading}
+          className={`w-full mt-6 py-4 rounded-lg font-bold text-lg transition-all ${
+            canSubmit && !isLoading
+              ? 'bg-brand-pink text-white hover:bg-pink-600 shadow-lg hover:shadow-xl'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {isLoading ? 'Verifying...' : '✓ Verify Content'}
+        </button>
       </div>
     </div>
   );
