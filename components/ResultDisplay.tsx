@@ -148,12 +148,18 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
       </div>
 
       {/* NEW: Scoring Factors Breakdown (for News) */}
-      {result.trust_score?.scoring_factors && result.trust_score.scoring_factors.length > 0 && (
-        <div className="border-t pt-6 mb-6">
-          <h3 className="text-xl font-bold text-navy mb-4 flex items-center">
-            <span className="mr-2">📊</span>
-            Scoring Breakdown
-          </h3>
+{(() => {
+  console.log('🔍 Full result object:', result);
+  console.log('🔍 Trust score exists?', result?.trust_score);
+  console.log('🔍 Scoring factors:', result?.trust_score?.scoring_factors);
+  return null;
+})()}
+{result.trust_score?.scoring_factors && result.trust_score.scoring_factors.length > 0 && (
+  <div className="border-t pt-6 mb-6">
+    <h3 className="text-xl font-bold text-navy mb-4 flex items-center">
+      <span className="mr-2">📊</span>
+      Scoring Breakdown
+    </h3>
           <div className="space-y-4">
             {result.trust_score.scoring_factors.map((factor: any, index: number) => (
               <div key={index} className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
