@@ -66,14 +66,37 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
           <h2 className="text-2xl md:text-3xl font-bold text-navy">credisource score</h2>
         </div>
 
-        {/* Score Display */}
+            {/* Score Display */}
         <div className="text-center mb-8">
-          <div className={`text-7xl md:text-8xl font-bold mb-4 ${getScoreColor(score)}`}>
+        <div className={`text-7xl md:text-8xl font-bold mb-4 ${getScoreColor(score)}`}>
             {Math.round(score)}%
           </div>
           <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">
             {verdict}
           </p>
+          
+          {/* Status Badge - DO NOT SHARE / SAFE TO SHARE */}
+          {details?.warning_level && (
+            <div className="mt-4 flex justify-center">
+              {(details.warning_level === 'critical' || details.warning_level === 'high') ? (
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-50 border-2 border-red-500 rounded-lg shadow-sm">
+                  <span className="text-red-600 text-xl">⚠️</span>
+                  <span className="text-red-800 font-bold text-sm uppercase tracking-wide">DO NOT SHARE</span>
+                </div>
+              ) : details.warning_level === 'medium' ? (
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-50 border-2 border-yellow-500 rounded-lg shadow-sm">
+                  <span className="text-yellow-600 text-xl">⚠️</span>
+                  <span className="text-yellow-800 font-bold text-sm uppercase tracking-wide">VERIFY BEFORE SHARING</span>
+                </div>
+              ) : details.should_share && (
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-50 border-2 border-green-500 rounded-lg shadow-sm">
+                  <span className="text-green-600 text-xl">✓</span>
+                  <span className="text-green-800 font-bold text-sm uppercase tracking-wide">SAFE TO SHARE</span>
+                </div>
+              )}
+            </div>
+          )}
+          
           {details?.explanation && (
             <p className="text-gray-600 mt-4 max-w-2xl mx-auto leading-relaxed">
               {details.explanation}
