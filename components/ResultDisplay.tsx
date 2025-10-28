@@ -33,27 +33,21 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
   // DEBUG: Let's see what we're working with
   console.log('========== EXTRACTION DEBUG ==========');
   console.log('actualResult:', actualResult);
-  console.log('actualResult.trust_score:', actualResult.trust_score);
-  console.log('actualResult.label:', actualResult.label);
+  console.log('actualResult.trust_score:', actualResult?.trust_score);
+  console.log('actualResult.label:', actualResult?.label);
 
-  // Backend returns:
-  // {
-  //   "trust_score": 97,              <- THE SCORE (number)
-  //   "label": "Highly Credible",     <- THE VERDICT
-  //   "verdict": "Based on...",       <- LONGER EXPLANATION
-  //   "source_credibility": 95,
-  //   "content_quality": 100,
-  //   "cross_reference": 95,
-  //   "evidence": { ... }
-  // }
-
-  const score = actualResult.trust_score || 0;  // ✅ FIXED: Get score directly
-  const label = actualResult.label || 'Unknown';  // ✅ FIXED: Use label for verdict
+  // CRITICAL FIX: Extract score and label AFTER getting actualResult
+  const score = actualResult?.trust_score || 0;
+  const label = actualResult?.label || 'Unknown';
+  
+  console.log('========== EXTRACTED VALUES ==========');
+  console.log('Extracted score:', score);
+  console.log('Extracted label:', label);
   
   // Build details object for ScoreDisplay
   const details = {
     trust_score: {
-      explanation: actualResult.explanation || actualResult.verdict || '',
+      explanation: actualResult?.explanation || actualResult?.verdict || '',
       confidence: score >= 80 ? 'High' : score >= 50 ? 'Medium' : 'Low',
       recommended_action: score >= 70 
         ? 'This content appears credible based on our analysis.'
@@ -63,40 +57,45 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
       scoring_factors: [
         {
           factor: 'Source Credibility',
-          score: actualResult.source_credibility || 0,
-          weight: actualResult.weights_used?.source ? `${Math.round(actualResult.weights_used.source * 100)}%` : '40%',
-          reasoning: actualResult.evidence?.source?.verdict || 'Source analysis completed'
+          score: actualResult?.source_credibility || 0,
+          weight: actualResult?.weights_used?.source ? `${Math.round(actualResult.weights_used.source * 100)}%` : '40%',
+          reasoning: actualResult?.evidence?.source?.verdict || 'Source analysis completed'
         },
         {
           factor: 'Content Quality',
-          score: actualResult.content_quality || 0,
-          weight: actualResult.weights_used?.content ? `${Math.round(actualResult.weights_used.content * 100)}%` : '35%',
-          reasoning: actualResult.evidence?.content?.verdict || 'Content analysis completed'
+          score: actualResult?.content_quality || 0,
+          weight: actualResult?.weights_used?.content ? `${Math.round(actualResult.weights_used.content * 100)}%` : '35%',
+          reasoning: actualResult?.evidence?.content?.verdict || 'Content analysis completed'
         },
         {
           factor: 'Cross-Reference',
-          score: actualResult.cross_reference || 0,
-          weight: actualResult.weights_used?.cross_ref ? `${Math.round(actualResult.weights_used.cross_ref * 100)}%` : '25%',
-          reasoning: actualResult.evidence?.cross_reference?.verdict || 'Cross-reference check completed'
+          score: actualResult?.cross_reference || 0,
+          weight: actualResult?.weights_used?.cross_ref ? `${Math.round(actualResult.weights_used.cross_ref * 100)}%` : '25%',
+          reasoning: actualResult?.evidence?.cross_reference?.verdict || 'Cross-reference check completed'
         }
       ],
-      methodology: `Story type: ${actualResult.story_type || 'standard'}. Weighted analysis across multiple factors.`
+      methodology: `Story type: ${actualResult?.story_type || 'standard'}. Weighted analysis across multiple factors.`
     },
     content_analysis: {
-      red_flags: actualResult.evidence?.content?.red_flags || []
+      red_flags: actualResult?.evidence?.content?.red_flags || []
     },
-    source_credibility: actualResult.evidence?.source ? {
+    source_credibility: actualResult?.evidence?.source ? {
       tier: actualResult.evidence.source.tier || 'unknown',
       bias: actualResult.evidence.source.bias || 'unknown',
       type: actualResult.evidence.source.type || 'unknown',
       verdict: actualResult.evidence.source.verdict || ''
     } : null,
     article: {
-      domain: actualResult.evidence?.source?.domain || 'Unknown',
-      title: 'News Article', // Backend doesn't return title in current version
-      word_count: null // Backend doesn't return word count in current version
+      domain: actualResult?.evidence?.source?.domain || 'Unknown',
+      title: 'News Article',
+      word_count: null
     }
   };
+
+  console.log('========== ABOUT TO RENDER SCOREDISPLAY ==========');
+  console.log('Passing score:', score);
+  console.log('Passing verdict:', label);
+  console.log('Passing details:', details);
 
   return (
     <ScoreDisplay 
