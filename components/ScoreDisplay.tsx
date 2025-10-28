@@ -42,8 +42,10 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
     return 'bg-red-100 text-red-800 border-red-300';
   };
 
-  const scoringFactors = details?.trust_score?.scoring_factors || [];
-  const hasFactors = scoringFactors && scoringFactors.length > 0;
+  // Phase 2 data structure: source_credibility, content_quality, cross_reference are at top level
+  const hasScoreBreakdown = details.source_credibility !== undefined && 
+                           details.content_quality !== undefined && 
+                           details.cross_reference !== undefined;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -72,9 +74,9 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
           <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">
             {verdict}
           </p>
-          {details?.trust_score?.explanation && (
+          {details?.explanation && (
             <p className="text-gray-600 mt-4 max-w-2xl mx-auto leading-relaxed">
-              {details.trust_score.explanation}
+              {details.explanation}
             </p>
           )}
         </div>
@@ -94,58 +96,105 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
           </div>
         </div>
 
-        {/* SCORING FACTORS BREAKDOWN */}
-        {hasFactors && (
+        {/* SCORING FACTORS BREAKDOWN - Phase 2 Structure */}
+        {hasScoreBreakdown && (
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="text-xl font-bold text-navy mb-4">
               📊 Scoring Breakdown
             </h3>
             <div className="space-y-4">
-              {scoringFactors.map((factor: any, index: number) => (
-                <div key={index} className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-navy mb-1">
-                        {factor.factor || 'Unknown Factor'}
-                      </h4>
-                      <span className="text-sm text-gray-500">
-                        Weight: {factor.weight || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="ml-4">
-                      <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(factor.score || 0)}`}>
-                        {factor.score || 0}/100
-                      </span>
-                    </div>
+              {/* Source Credibility */}
+              <div className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-lg text-navy mb-1">
+                      Source Credibility
+                    </h4>
+                    <span className="text-sm text-gray-500">
+                      Weight: {details.weights_used?.source ? `${Math.round(details.weights_used.source * 100)}%` : '40%'}
+                    </span>
                   </div>
-                  {factor.reasoning && (
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      {factor.reasoning}
-                    </p>
-                  )}
+                  <div className="ml-4">
+                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(details.source_credibility)}`}>
+                      {details.source_credibility}/100
+                    </span>
+                  </div>
                 </div>
-              ))}
+                {details.evidence?.source?.verdict && (
+                  <p className="text-gray-700 leading-relaxed text-sm">
+                    {details.evidence.source.verdict}
+                  </p>
+                )}
+              </div>
+
+              {/* Content Quality */}
+              <div className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-lg text-navy mb-1">
+                      Content Quality
+                    </h4>
+                    <span className="text-sm text-gray-500">
+                      Weight: {details.weights_used?.content ? `${Math.round(details.weights_used.content * 100)}%` : '35%'}
+                    </span>
+                  </div>
+                  <div className="ml-4">
+                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(details.content_quality)}`}>
+                      {details.content_quality}/100
+                    </span>
+                  </div>
+                </div>
+                {details.evidence?.content?.verdict && (
+                  <p className="text-gray-700 leading-relaxed text-sm">
+                    {details.evidence.content.verdict}
+                  </p>
+                )}
+              </div>
+
+              {/* Cross-Reference */}
+              <div className="bg-gray-50 p-5 rounded-lg border-l-4 border-brand-pink">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-lg text-navy mb-1">
+                      Cross-Reference
+                    </h4>
+                    <span className="text-sm text-gray-500">
+                      Weight: {details.weights_used?.cross_ref ? `${Math.round(details.weights_used.cross_ref * 100)}%` : '25%'}
+                    </span>
+                  </div>
+                  <div className="ml-4">
+                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg border-2 ${getBadgeColor(details.cross_reference)}`}>
+                      {details.cross_reference}/100
+                    </span>
+                  </div>
+                </div>
+                {details.evidence?.cross_reference?.verdict && (
+                  <p className="text-gray-700 leading-relaxed text-sm">
+                    {details.evidence.cross_reference.verdict}
+                  </p>
+                )}
+              </div>
             </div>
-            {details?.trust_score?.methodology && (
+            {details?.story_type && (
               <p className="text-xs text-gray-500 mt-4 italic">
-                Method: {details.trust_score.methodology}
+                Story type: {details.story_type}. Weighted analysis across multiple factors.
               </p>
             )}
           </div>
         )}
 
-        {/* RED FLAGS */}
-        {details?.content_analysis?.red_flags && details.content_analysis.red_flags.length > 0 && (
+        {/* RED FLAGS - Phase 2 Structure */}
+        {details?.evidence?.content?.red_flags && details.evidence.content.red_flags.length > 0 && (
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="text-xl font-bold text-navy mb-4">
               🚩 Quality Issues Detected
             </h3>
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
               <ul className="space-y-2">
-                {details.content_analysis.red_flags.map((flag: string, index: number) => (
+                {details.evidence.content.red_flags.map((flag: string, index: number) => (
                   <li key={index} className="flex items-start">
                     <span className="text-yellow-600 mr-2">⚠️</span>
-                    <span className="text-gray-700 capitalize">{flag}</span>
+                    <span className="text-gray-700">{flag}</span>
                   </li>
                 ))}
               </ul>
@@ -153,8 +202,8 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
           </div>
         )}
 
-        {/* SOURCE INFO */}
-        {details?.source_credibility && (
+        {/* SOURCE INFO - Phase 2 Structure */}
+        {details?.evidence?.source && (
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="text-xl font-bold text-navy mb-4">
               🏢 Source Information
@@ -163,74 +212,71 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600 mb-1">Domain</p>
-                  <p className="font-semibold text-navy">{details.article?.domain || 'Unknown'}</p>
+                  <p className="font-semibold text-navy">{details.evidence.source.domain || 'Unknown'}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">Credibility Tier</p>
-                  <p className="font-semibold text-navy capitalize">{details.source_credibility.tier}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 mb-1">Bias</p>
-                  <p className="font-semibold text-navy capitalize">{details.source_credibility.bias}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 mb-1">Type</p>
-                  <p className="font-semibold text-navy capitalize">
-                    {details.source_credibility.type?.replace('_', ' ')}
-                  </p>
-                </div>
+                {details.evidence.source.tier && (
+                  <div>
+                    <p className="text-gray-600 mb-1">Credibility Tier</p>
+                    <p className="font-semibold text-navy capitalize">{details.evidence.source.tier}</p>
+                  </div>
+                )}
+                {details.evidence.source.bias && (
+                  <div>
+                    <p className="text-gray-600 mb-1">Bias</p>
+                    <p className="font-semibold text-navy capitalize">{details.evidence.source.bias}</p>
+                  </div>
+                )}
+                {details.evidence.source.type && (
+                  <div>
+                    <p className="text-gray-600 mb-1">Type</p>
+                    <p className="font-semibold text-navy capitalize">
+                      {details.evidence.source.type.replace('_', ' ')}
+                    </p>
+                  </div>
+                )}
               </div>
-              {details.source_credibility.verdict && (
+              {details.evidence.source.verdict && (
                 <p className="text-sm text-gray-700 mt-4 pt-4 border-t border-blue-200">
-                  <strong>Assessment:</strong> {details.source_credibility.verdict}
+                  <strong>Assessment:</strong> {details.evidence.source.verdict}
                 </p>
               )}
             </div>
           </div>
         )}
 
-        {/* ARTICLE INFO */}
-        {details?.article && (
+        {/* CROSS-REFERENCE SOURCES - Show corroborating sources */}
+        {details?.evidence?.cross_reference?.corroborating_sources && 
+         details.evidence.cross_reference.corroborating_sources.length > 0 && (
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="text-xl font-bold text-navy mb-4">
-              📰 Article Details
+              🔍 Corroborating Sources ({details.evidence.cross_reference.sources_found} found)
             </h3>
-            <div className="bg-gray-50 p-5 rounded-lg space-y-3 text-sm">
-              {details.article.title && (
-                <div>
-                  <p className="text-gray-600 mb-1">Title</p>
-                  <p className="font-semibold text-navy">{details.article.title}</p>
+            <div className="bg-gray-50 p-5 rounded-lg space-y-3">
+              {details.evidence.cross_reference.corroborating_sources.slice(0, 3).map((source: any, index: number) => (
+                <div key={index} className="border-l-2 border-blue-500 pl-3">
+                  <p className="font-semibold text-navy text-sm">{source.source}</p>
+                  <p className="text-xs text-gray-600 mt-1">{source.title}</p>
                 </div>
-              )}
-              {details.article.author && (
-                <div>
-                  <p className="text-gray-600 mb-1">Author</p>
-                  <p className="text-gray-700">{details.article.author}</p>
-                </div>
-              )}
-              {details.article.word_count && (
-                <div>
-                  <p className="text-gray-600 mb-1">Word Count</p>
-                  <p className="text-gray-700">{details.article.word_count} words</p>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         )}
 
         {/* Confidence & Recommendation */}
-        {details?.trust_score?.confidence && (
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-            <p className="text-sm text-gray-700">
-              <strong>Confidence:</strong> {details.trust_score.confidence}
-            </p>
-            {details.trust_score.recommended_action && (
-              <p className="text-sm text-gray-700 mt-2">
-                <strong>Recommendation:</strong> {details.trust_score.recommended_action}
-              </p>
-            )}
-          </div>
-        )}
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <p className="text-sm text-gray-700">
+            <strong>Confidence:</strong> {score >= 80 ? 'High' : score >= 50 ? 'Medium' : 'Low'}
+          </p>
+          <p className="text-sm text-gray-700 mt-2">
+            <strong>Recommendation:</strong> {
+              score >= 70 
+                ? 'This content appears credible based on our analysis.'
+                : score >= 40
+                ? 'Exercise caution - verify with additional sources.'
+                : 'This content has low credibility - verify carefully before trusting.'
+            }
+          </p>
+        </div>
 
         {/* Verify Another Button */}
         <div className="text-center mt-8">
