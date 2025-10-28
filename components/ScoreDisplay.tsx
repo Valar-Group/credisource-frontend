@@ -12,6 +12,17 @@ export default function ScoreDisplay({ score, verdict, details }: ScoreDisplayPr
   console.log('Verdict:', verdict);
   console.log('Details:', details);
 
+  // SAFETY CHECK: If score or verdict is undefined, don't render
+  if (score === undefined || verdict === undefined || !details) {
+    console.log('⚠️ MISSING DATA - Score, verdict, or details is undefined');
+    return (
+      <div className="p-12 text-center">
+        <p className="text-red-600">Error: Missing display data</p>
+        <pre className="text-xs mt-4">{JSON.stringify({ score, verdict, details }, null, 2)}</pre>
+      </div>
+    );
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 70) return 'text-green-600';
     if (score >= 40) return 'text-yellow-600';
