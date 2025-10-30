@@ -28,79 +28,60 @@ export default function ResultDisplay({ result, isLoading }: ResultDisplayProps)
   // IMPORTANT: Handle API response structure
   // The API returns: { status: "completed", result: { trust_score: 97, ... } }
   // So we need to extract the actual result data
-  const actualResult = result.result || result; // Handle both cases
+  const actualResult = result.result || result;
   
-  // DEBUG: Let's see what we're working with
   console.log('========== EXTRACTION DEBUG ==========');
   console.log('actualResult:', actualResult);
   console.log('actualResult.trust_score:', actualResult?.trust_score);
   console.log('actualResult.label:', actualResult?.label);
 
-  // CRITICAL FIX: Extract score and label AFTER getting actualResult
-  const score = actualResult?.trust_score || 0;
-  const label = actualResult?.label || 'Unknown';
+  // Extract score and label
+  const score = actualResult?.trust_score ?? 50; // Default to 50 if undefined
+  const verdict = actualResult?.label || actualResult?.verdict || 'Unknown';
   
   console.log('========== EXTRACTED VALUES ==========');
   console.log('Extracted score:', score);
-  console.log('Extracted label:', label);
+  console.log('Extracted verdict:', verdict);
   
-  // Build details object for ScoreDisplay
+  // Build details object with FLAT STRUCTURE that ScoreDisplay expects
   const details = {
-    trust_score: {
-      explanation: actualResult?.explanation || actualResult?.verdict || '',
-      confidence: score >= 80 ? 'High' : score >= 50 ? 'Medium' : 'Low',
-      recommended_action: score >= 70 
-        ? 'This content appears credible based on our analysis.'
-        : score >= 40
-        ? 'Exercise caution - verify with additional sources.'
-        : 'This content has low credibility - verify carefully before trusting.',
-      scoring_factors: [
-        {
-          factor: 'Source Credibility',
-          score: actualResult?.source_credibility || 0,
-          weight: actualResult?.weights_used?.source ? `${Math.round(actualResult.weights_used.source * 100)}%` : '40%',
-          reasoning: actualResult?.evidence?.source?.verdict || 'Source analysis completed'
-        },
-        {
-          factor: 'Content Quality',
-          score: actualResult?.content_quality || 0,
-          weight: actualResult?.weights_used?.content ? `${Math.round(actualResult.weights_used.content * 100)}%` : '35%',
-          reasoning: actualResult?.evidence?.content?.verdict || 'Content analysis completed'
-        },
-        {
-          factor: 'Cross-Reference',
-          score: actualResult?.cross_reference || 0,
-          weight: actualResult?.weights_used?.cross_ref ? `${Math.round(actualResult.weights_used.cross_ref * 100)}%` : '25%',
-          reasoning: actualResult?.evidence?.cross_reference?.verdict || 'Cross-reference check completed'
-        }
-      ],
-      methodology: `Story type: ${actualResult?.story_type || 'standard'}. Weighted analysis across multiple factors.`
-    },
-    content_analysis: {
-      red_flags: actualResult?.evidence?.content?.red_flags || []
-    },
-    source_credibility: actualResult?.evidence?.source ? {
-      tier: actualResult.evidence.source.tier || 'unknown',
-      bias: actualResult.evidence.source.bias || 'unknown',
-      type: actualResult.evidence.source.type || 'unknown',
-      verdict: actualResult.evidence.source.verdict || ''
-    } : null,
-    article: {
-      domain: actualResult?.evidence?.source?.domain || 'Unknown',
-      title: 'News Article',
-      word_count: null
-    }
+    // Top-level fields (ScoreDisplay looks here first)
+    explanation: actualResult?.explanation || actualResult?.verdict || '',
+    warning_level: actualResult?.warning_level,
+    should_share: actualResult?.should_share,
+    recommendation: actualResult?.recommendation,
+    
+    // Score breakdown (FLAT, not nested)
+    source_credibility: actualResult?.source_credibility,
+    content_quality: actualResult?.content_quality,
+    cross_reference: actualResult?.cross_reference,
+    
+    // Metadata
+    weights_used: actualResult?.weights_used,
+    story_type: actualResult?.story_type,
+    
+    // Evidence (keep structure from backend)
+    evidence: actualResult?.evidence,
+    
+    // Additional fields for compatibility
+    detectors_used: actualResult?.detectors_used,
+    providers: actualResult?.providers,
+    provider: actualResult?.provider,
+    confidence: actualResult?.confidence,
+    error: actualResult?.error
   };
 
-  console.log('========== ABOUT TO RENDER SCOREDISPLAY ==========');
-  console.log('Passing score:', score);
-  console.log('Passing verdict:', label);
-  console.log('Passing details:', details);
+  console.log('========== FINAL DATA STRUCTURE ==========');
+  console.log('score:', score);
+  console.log('verdict:', verdict);
+  console.log('details.explanation:', details.explanation);
+  console.log('details.source_credibility:', details.source_credibility);
+  console.log('details.evidence:', details.evidence);
 
   return (
     <ScoreDisplay 
       score={score}
-      verdict={label}
+      verdict={verdict}
       details={details}
     />
   );
