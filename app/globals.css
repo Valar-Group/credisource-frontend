@@ -89,9 +89,6 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-pink to-brand-navy;
   }
   
-  .score-gradient {
-    @apply bg-gradient-to-r from-brand-pink to-brand-navy;
-  }
 }
 
 /* Custom animations */
