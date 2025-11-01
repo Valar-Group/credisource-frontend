@@ -86,7 +86,7 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-pink to-brand-navy;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-blue-900;
   }
   
 }
